@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TodoApi.Models;
+using WebApplication4.DTO;
+using WebApplication4.Services;
 
 namespace WebApplication4.Controllers
 {
@@ -13,95 +15,50 @@ namespace WebApplication4.Controllers
     [ApiController]
     public class HousesController : ControllerBase
     {
-        private readonly AppDBcontext _context;
+        
+        private readonly IHouseService _houseService;
 
-        public HousesController(AppDBcontext context)
+        public HousesController(IHouseService houseService)
         {
-            _context = context;
+            _houseService = houseService;
         }
 
         // GET: api/Houses
         [HttpGet]
         public async Task<ActionResult<IEnumerable<House>>> GetHouses()
         {
-            return await _context.Houses.ToListAsync();
+            return await _houseService.GetAllAsync();
         }
 
         // GET: api/Houses/5
         [HttpGet("{id}")]
         public async Task<ActionResult<House>> GetHouse(int id)
         {
-            var house = await _context.Houses.FindAsync(id);
-
-            if (house == null)
-            {
-                return NotFound();
-            }
-
-            return house;
+            return await _houseService.GetByIdAsync(id);
         }
 
         // PUT: api/Houses/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutHouse(int id, House house)
+        public async Task<bool> PutHouse(int id, HouseDTO house)
         {
-            if (id != house.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(house).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!HouseExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
+            return await _houseService.UpdateAsync(id, house);
         }
 
         // POST: api/Houses
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<House>> PostHouse(House house)
+        public async Task<ActionResult<House>> PostHouse(HouseDTO house)
         {
-            _context.Houses.Add(house);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetHouse", new { id = house.Id }, house);
+            return await _houseService.CreateAsync(house);
         }
 
         // DELETE: api/Houses/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteHouse(int id)
+        public async Task<bool> DeleteHouse(int id)
         {
-            var house = await _context.Houses.FindAsync(id);
-            if (house == null)
-            {
-                return NotFound();
-            }
-
-            _context.Houses.Remove(house);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            return await _houseService.DeleteAsync(id);
         }
-
-        private bool HouseExists(int id)
-        {
-            return _context.Houses.Any(e => e.Id == id);
-        }
+      
     }
 }

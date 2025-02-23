@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TodoApi.Models;
+using WebApplication4.DTO;
+using WebApplication4.Services;
 
 namespace WebApplication4.Controllers
 {
@@ -13,95 +15,49 @@ namespace WebApplication4.Controllers
     [ApiController]
     public class ApartmentsController : ControllerBase
     {
-        private readonly AppDBcontext _context;
+        
+        private readonly IapartmentService _apartmentService;
 
-        public ApartmentsController(AppDBcontext context)
-        {
-            _context = context;
+        public ApartmentsController(IapartmentService apartmentService)
+        { 
+            _apartmentService = apartmentService;
         }
 
         // GET: api/Apartments
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Apartment>>> GetApartments()
         {
-            return await _context.Apartments.ToListAsync();
+            return await _apartmentService.GetAllAsync();
         }
 
         // GET: api/Apartments/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Apartment>> GetApartment(int id)
         {
-            var apartment = await _context.Apartments.FindAsync(id);
-
-            if (apartment == null)
-            {
-                return NotFound();
-            }
-
-            return apartment;
+            return await _apartmentService.GetByIdAsync(id);
         }
 
         // PUT: api/Apartments/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutApartment(int id, Apartment apartment)
+        public async Task<bool> PutApartment(int id, ApartmentDTO apartment)
         {
-            if (id != apartment.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(apartment).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ApartmentExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
+            return await _apartmentService.UpdateAsync(id , apartment);
         }
 
         // POST: api/Apartments
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Apartment>> PostApartment(Apartment apartment)
+        public async Task<ActionResult<Apartment>> PostApartment(ApartmentDTO apartment)
         {
-            _context.Apartments.Add(apartment);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetApartment", new { id = apartment.Id }, apartment);
+            return await _apartmentService.CreateAsync(apartment);
         }
 
         // DELETE: api/Apartments/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteApartment(int id)
+        public async Task<bool> DeleteApartment(int id)
         {
-            var apartment = await _context.Apartments.FindAsync(id);
-            if (apartment == null)
-            {
-                return NotFound();
-            }
-
-            _context.Apartments.Remove(apartment);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool ApartmentExists(int id)
-        {
-            return _context.Apartments.Any(e => e.Id == id);
+            return await _apartmentService.DeleteAsync(id);
         }
     }
 }

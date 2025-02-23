@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TodoApi.Models;
+using WebApplication4.DTO;
+using WebApplication4.Services;
 
 namespace WebApplication4.Controllers
 {
@@ -13,95 +15,48 @@ namespace WebApplication4.Controllers
     [ApiController]
     public class ResidentsController : ControllerBase
     {
-        private readonly AppDBcontext _context;
+        private readonly IresidentService _residentService;
 
-        public ResidentsController(AppDBcontext context)
+        public ResidentsController(IresidentService residentService)
         {
-            _context = context;
+            _residentService = residentService;
         }
 
         // GET: api/Residents
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Resident>>> GetResidents()
         {
-            return await _context.Residents.ToListAsync();
+            return await _residentService.GetAllAsync();
         }
 
         // GET: api/Residents/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Resident>> GetResident(int id)
         {
-            var resident = await _context.Residents.FindAsync(id);
-
-            if (resident == null)
-            {
-                return NotFound();
-            }
-
-            return resident;
+            return await _residentService.GetByIdAsync(id);
         }
 
         // PUT: api/Residents/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutResident(int id, Resident resident)
+        public async Task<bool> PutResident(int id, ResidentDTO resident)
         {
-            if (id != resident.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(resident).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ResidentExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
+            return await _residentService.UpdateAsync(id, resident);
         }
 
         // POST: api/Residents
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Resident>> PostResident(Resident resident)
+        public async Task<ActionResult<Resident>> PostResident(ResidentDTO resident)
         {
-            _context.Residents.Add(resident);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetResident", new { id = resident.Id }, resident);
+            return await _residentService.CreateAsync(resident);
         }
 
         // DELETE: api/Residents/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteResident(int id)
+        public async Task<bool> DeleteResident(int id)
         {
-            var resident = await _context.Residents.FindAsync(id);
-            if (resident == null)
-            {
-                return NotFound();
-            }
-
-            _context.Residents.Remove(resident);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool ResidentExists(int id)
-        {
-            return _context.Residents.Any(e => e.Id == id);
+            return await _residentService.DeleteAsync(id);
         }
     }
 }
